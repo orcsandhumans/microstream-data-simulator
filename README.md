@@ -26,7 +26,7 @@ This microservice serves to generate fake data and push them into a message brok
 - [ ] Add tools to monitor Kafka Cluster to scale up consumers. - https://www.youtube.com/watch?v=hsJ2qtwoWZw&list=WL
 
 ```bash
-mvn clean package
+mvnw clean package
 java -jar target/data-simulator-0.0.1-SNAPSHOT.jar
 docker build -t data-simulator:latest .
 docker run --rm -p 8080:8080 data-simulator:latest
