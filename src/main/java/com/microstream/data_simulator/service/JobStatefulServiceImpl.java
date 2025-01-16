@@ -16,10 +16,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-@Service
-public class JobServiceImpl implements JobService {
+//@Service
+public class JobStatefulServiceImpl implements JobService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(JobServiceImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(JobStatefulServiceImpl.class);
 
   private static final String FILE_PATH = "stocks_in_work.json";
   private final Map<String, Future<?>> jobMap = new ConcurrentHashMap<>();
@@ -29,19 +29,19 @@ public class JobServiceImpl implements JobService {
 
   private Lock lock = new ReentrantLock();
 
-  public JobServiceImpl(@Qualifier("customTreadPoolTaskExecutor") ThreadPoolTaskExecutor taskExecutor,
+  public JobStatefulServiceImpl(@Qualifier("customTreadPoolTaskExecutor") ThreadPoolTaskExecutor taskExecutor,
       StockProducer stockProducer, ObjectMapper objectMapper) {
     this.taskExecutor = taskExecutor;
     this.stockProducer = stockProducer;
     this.objectMapper = objectMapper;
-    restore();
+    restoreState();
   }
 
   @Override
   public void add(String jobId) {
     if (!jobMap.containsKey(jobId)) {
       jobMap.put(jobId, taskExecutor.submit(new Job(jobId, stockProducer)));
-      store();
+      saveState();
     }
   }
 
@@ -52,7 +52,7 @@ public class JobServiceImpl implements JobService {
         jobMap.put(jobId, taskExecutor.submit(new Job(jobId, stockProducer)));
       }
     }
-    store();
+    saveState();
   }
 
   @Override
@@ -60,12 +60,11 @@ public class JobServiceImpl implements JobService {
     Future<?> future = jobMap.remove(jobId);
     if (future != null) {
       future.cancel(true);
-      store();
+      saveState();
     }
   }
 
-  @Override
-  public void store() {
+  public void saveState() {
     lock.lock();
     try {
       List<String> jobKeys = jobMap.keySet().stream().toList();
@@ -78,8 +77,7 @@ public class JobServiceImpl implements JobService {
     }
   }
 
-  @Override
-  public void restore() {
+  public void restoreState() {
     lock.lock();
     try {
       File file = new File(FILE_PATH);
