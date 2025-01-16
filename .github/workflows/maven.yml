@@ -28,6 +28,9 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    - name: Grant execution permission to Maven Wrapper
+      run: chmod +x ./mvnw
+
     - name: Extract version from pom.xml
       id: get_version
       run: echo "VERSION=$(./mvnw help:evaluate -Dexpression='project.version' -q -DforceStdout)" >> $GITHUB_ENV
